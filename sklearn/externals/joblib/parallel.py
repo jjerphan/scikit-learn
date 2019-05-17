@@ -214,8 +214,10 @@ class BatchedCalls(object):
     """Wrap a sequence of (func, args, kwargs) tuples as a single callable"""
 
     def __init__(self, iterator_slice, backend_and_jobs, pickle_cache=None):
+        logging.info("BatchedCalls.__init__ called")
         self.items = list(iterator_slice)
         self._size = len(self.items)
+        logging.info("BatchedCalls.__init__ : wraps %s objects" % self._size)
         if isinstance(backend_and_jobs, tuple):
             self._backend, self._n_jobs = backend_and_jobs
         else:
@@ -730,7 +732,7 @@ class Parallel(Logger):
         cb = BatchCompletionCallBack(dispatch_timestamp, len(batch), self)
         with self._lock:
             job_idx = len(self._jobs)
-            logging.info("Parallel._dispatch: submitting job of id %s to back-end" % job_idx)
+            logging.info("Parallel._dispatch: submitting job of id %s to back-end of size %s" % (job_idx, len(batch)))
             job = self._backend.apply_async(batch, callback=cb)
             # A job can complete so quickly than its callback is
             # called before we get here, causing self._jobs to
@@ -788,14 +790,9 @@ class Parallel(Logger):
         """Display the message on stout or stderr depending on verbosity"""
         # XXX: Not using the logger framework: need to
         # learn to use logger better.
-        if not self.verbose:
-            return
-        if self.verbose < 50:
-            writer = sys.stderr.write
-        else:
-            writer = sys.stdout.write
         msg = msg % msg_args
-        writer('[%s]: %s\n' % (self, msg))
+        log = '[%s]: %s\n' % (self, msg)
+        logging.info(log)
 
     def print_progress(self):
         """Display the process of the parallel execution only a fraction
@@ -853,13 +850,17 @@ class Parallel(Logger):
             # we empty it and Python list are not thread-safe by default hence
             # the use of the lock
             with self._lock:
+                logging.info("Parallel.retrieve: pop one job from queue")
                 job = self._jobs.pop(0)
 
             try:
                 if getattr(self._backend, 'supports_timeout', False):
-                    self._output.extend(job.get(timeout=self.timeout))
+                    res = job.get(timeout=self.timeout)
                 else:
-                    self._output.extend(job.get())
+                    res = job.get()
+                logging.info("Parallel.retrieve: adding result of job to output")
+                logging.info(res)
+                self._output.extend(res)
 
             except BaseException as exception:
                 # Note: we catch any BaseException instead of just Exception
@@ -907,7 +908,7 @@ class Parallel(Logger):
         if hasattr(self._backend, 'start_call'):
             self._backend.start_call()
         iterator = iter(iterable)
-        logging.info("Parallel.__init__: iterator created")
+        logging.info("Parallel.__call__: iterator created")
         logging.info(iterator)
         pre_dispatch = self.pre_dispatch
 
@@ -945,11 +946,14 @@ class Parallel(Logger):
             # remaining jobs.
             self._iterating = False
             if self.dispatch_one_batch(iterator):
+                logging.info("Parallel.__call__ dispatched initial batch")
                 self._iterating = self._original_iterator is not None
 
             while self.dispatch_one_batch(iterator):
                 logging.info("Parallel.__call__ dispatched one batch")
                 pass
+
+            logging.info("Parallel.__call__ done dispatching batches")
 
             if pre_dispatch == "all" or n_jobs == 1:
                 # The iterable was consumed all at once by the above for loop.
@@ -958,6 +962,7 @@ class Parallel(Logger):
                 self._iterating = False
 
             with self._backend.retrieval_context():
+                logging.info("Parallel.__call__ retrieving context")
                 self.retrieve()
             # Make sure that we get a last message telling us we are done
             elapsed_time = time.time() - self._start_time

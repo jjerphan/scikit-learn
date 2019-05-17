@@ -231,10 +231,6 @@ class DaskDistributedBackend(ParallelBackendBase, AutoBatchingMixin):
             args = list(maybe_to_futures(args))
             kwargs = dict(zip(kwargs.keys(),
                               maybe_to_futures(kwargs.values())))
-            logging.info("args:")
-            logging.info(args)
-            logging.info("kwargs:")
-            logging.info(kwargs)
             tasks.append((f, args, kwargs))
 
         logging.info("Appending tasks done")
@@ -247,14 +243,16 @@ class DaskDistributedBackend(ParallelBackendBase, AutoBatchingMixin):
         key = '%s-batch-%s' % (_funcname(func), uuid4().hex)
         func, args = self._to_func_args(func)
 
-        logging.info("Submitting to the client")
+        logging.info("DaskDistributedBackend.apply_async: Submitting to Client")
         future = self.client.submit(func, *args, key=key, **self.submit_kwargs)
+        logging.info("DaskDistributedBackend.apply_async: Done submitting to the Client")
         self.task_futures.add(future)
-        logging.info("Added future to tasks")
+        logging.info("DaskDistributedBackend.apply_async: Added future to tasks")
         logging.info(future)
 
         @gen.coroutine
         def callback_wrapper():
+            logging.info("DaskDistributedBackend.apply_async: Executing callback_wrapper")
             result = yield _wait([future])
             self.task_futures.remove(future)
             if callback is not None:
@@ -268,6 +266,7 @@ class DaskDistributedBackend(ParallelBackendBase, AutoBatchingMixin):
             return ref().result()
 
         future.get = get  # monkey patch to achieve AsyncResult API
+        logging.info("DaskDistributedBackend.apply_async: Returning future")
         logging.info(future)
         return future
 
