@@ -316,10 +316,17 @@ class BatchCompletionCallBack(object):
         self.parallel._backend.batch_completed(self.batch_size,
                                                this_batch_duration)
         self.parallel.print_progress()
+        logging.info("BatchCompletionCallBack.__call__: taking the lock")
         with self.parallel._lock:
+            logging.info("BatchCompletionCallBack.__call__: lock taken")
             if self.parallel._original_iterator is not None:
+                logging.info("BatchCompletionCallBack.__call__: calling Parallel.dispatch_next")
                 self.parallel.dispatch_next()
+            else:
+                logging.info("BatchCompletionCallBack.__call__: not calling Parallel.dispatch_next")
 
+            logging.info("BatchCompletionCallBack.__call__: leaving the lock")
+        logging.info("BatchCompletionCallBack.__call__: left the lock")
 
 ###############################################################################
 def register_parallel_backend(name, factory, make_default=False):
@@ -730,7 +737,9 @@ class Parallel(Logger):
 
         dispatch_timestamp = time.time()
         cb = BatchCompletionCallBack(dispatch_timestamp, len(batch), self)
+        logging.info("Parallel._dispatch: taking the lock")
         with self._lock:
+            logging.info("Parallel._dispatch: took the lock")
             job_idx = len(self._jobs)
             logging.info("Parallel._dispatch: submitting job of id %s to back-end of size %s" % (job_idx, len(batch)))
             job = self._backend.apply_async(batch, callback=cb)
@@ -740,6 +749,8 @@ class Parallel(Logger):
             # used (rather than .append) in the following line
             logging.info("Parallel._dispatch: job of id %s inserted to back-end" % job_idx)
             self._jobs.insert(job_idx, job)
+            logging.info("Parallel._dispatch: leaving the lock")
+        logging.info("Parallel._dispatch: left the lock")
 
     def dispatch_next(self):
         """Dispatch more data for parallel processing
@@ -778,12 +789,15 @@ class Parallel(Logger):
             if len(tasks) == 0:
                 # No more tasks available in the iterator: tell caller to stop.
                 logging.info("Parallel.dispatch_one_batch: No more tasks available in the iterator; leaving lock")
-                return False
+                jobs_left_to_dispatch = False
             else:
                 logging.info("Parallel.dispatch: calling self._dispatch")
                 self._dispatch(tasks)
                 logging.info("Parallel.dispatch_one_batch: leaving the lock after self._dispatch")
-                return True
+                jobs_left_to_dispatch = True
+
+        logging.info("Parallel.dispatch_one_batch: left the lock")
+        return jobs_left_to_dispatch
 
     def _print(self, msg, msg_args):
         logging.info("Parallel._print called")

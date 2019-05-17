@@ -207,12 +207,6 @@ class DaskDistributedBackend(ParallelBackendBase, AutoBatchingMixin):
                             # concurrently.
                             logging.info("maybe to future called")
                             logging.info("[f] = self.client.scatter([arg])")
-                            logging.info("args:")
-                            logging.info(args)
-                            logging.info("arg:")
-                            logging.info(arg)
-                            logging.info("f:")
-                            logging.info(f)
                             [f] = self.client.scatter([arg])
                             call_data_futures[arg] = f
 
