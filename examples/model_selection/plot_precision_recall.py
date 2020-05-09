@@ -90,8 +90,6 @@ matrix as a binary prediction (micro-averaging).
              :func:`sklearn.metrics.precision_score`,
              :func:`sklearn.metrics.f1_score`
 """
-from __future__ import print_function
-
 ###############################################################################
 # In binary classification settings
 # --------------------------------------------------------
@@ -136,21 +134,12 @@ print('Average precision-recall score: {0:0.2f}'.format(
 # Plot the Precision-Recall curve
 # ................................
 from sklearn.metrics import precision_recall_curve
+from sklearn.metrics import plot_precision_recall_curve
 import matplotlib.pyplot as plt
 
-precision, recall, _ = precision_recall_curve(y_test, y_score)
-
-plt.step(recall, precision, color='b', alpha=0.2,
-         where='post')
-plt.fill_between(recall, precision, step='post', alpha=0.2,
-                 color='b')
-
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.ylim([0.0, 1.05])
-plt.xlim([0.0, 1.0])
-plt.title('2-class Precision-Recall curve: AP={0:0.2f}'.format(
-          average_precision))
+disp = plot_precision_recall_curve(classifier, X_test, y_test)
+disp.ax_.set_title('2-class Precision-Recall curve: '
+                   'AP={0:0.2f}'.format(average_precision))
 
 ###############################################################################
 # In multi-label settings
@@ -210,10 +199,7 @@ print('Average precision score, micro-averaged over all classes: {0:0.2f}'
 #
 
 plt.figure()
-plt.step(recall['micro'], precision['micro'], color='b', alpha=0.2,
-         where='post')
-plt.fill_between(recall["micro"], precision["micro"], step='post', alpha=0.2,
-                 color='b')
+plt.step(recall['micro'], precision['micro'], where='post')
 
 plt.xlabel('Recall')
 plt.ylabel('Precision')
