@@ -278,7 +278,15 @@ def setup_package():
                                    "pytest-cov"],
                         "cython": ["cython"],
                         "flake8": ["flake8"],
-                        "mypy": ["mypy"]
+                        "mypy": ["mypy"],
+                        "coverage": ["coverage"],
+                        "sphinx": ["sphinx=2.1.2", "sphinx-gallery"],
+                        "pillow": ["pillow"],
+                        "joblib": ["joblib"],
+                        "memory_profiler": ["memory_profiler"],
+                        "packaging": ["packaging"],
+                        "testenv": ["testenv"],
+                        "numpydoc": ["numpydoc"]
                     },
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
