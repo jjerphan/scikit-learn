@@ -268,25 +268,25 @@ def setup_package():
                         'threadpoolctl>={}'.format(THREADPOOLCTL_MIN_VERSION)
                     ],
                     extras_require={
-                        "matplotlib":  ["matplotlib>={}"
+                        'matplotlib':  ['matplotlib>={}'
                     .format(MATPLOTLIB_MIN_VERSION)],
-                        "scikit-image": ["scikit-image>={}"
+                        'scikit-image': ['scikit-image>={}'
                     .format(SCIKIT_IMAGE_MIN_VERSION)],
-                        "pandas": ["pandas>={}".format(PANDAS_MIN_VERSION)],
-                        "seaborn": ["seaborn>={}".format(SEABORN_MIN_VERSION)],
-                        "pytest": ["pytest>={}".format(PYTEST_MIN_VERSION),
-                                   "pytest-cov"],
-                        "cython": ["cython"],
-                        "flake8": ["flake8"],
-                        "mypy": ["mypy"],
-                        "coverage": ["coverage"],
-                        "sphinx": ["sphinx=2.1.2", "sphinx-gallery"],
-                        "pillow": ["pillow"],
-                        "joblib": ["joblib"],
-                        "memory_profiler": ["memory_profiler"],
-                        "packaging": ["packaging"],
-                        "testenv": ["testenv"],
-                        "numpydoc": ["numpydoc"]
+                        'pandas': ['pandas>={}'.format(PANDAS_MIN_VERSION)],
+                        'seaborn': ['seaborn>={}'.format(SEABORN_MIN_VERSION)],
+                        'pytest': ['pytest>={}'.format(PYTEST_MIN_VERSION),
+                                   'pytest-cov'],
+                        'cython': ['cython'],
+                        'flake8': ['flake8'],
+                        'mypy': ['mypy'],
+                        'coverage': ['coverage'],
+                        'sphinx': ['sphinx=2.1.2', 'sphinx-gallery'],
+                        'pillow': ['pillow'],
+                        'joblib': ['joblib'],
+                        'memory_profiler': ['memory_profiler'],
+                        'packaging': ['packaging'],
+                        'testenv': ['testenv'],
+                        'numpydoc': ['numpydoc']
                     },
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
