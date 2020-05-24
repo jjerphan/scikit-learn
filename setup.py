@@ -58,6 +58,12 @@ else:
 JOBLIB_MIN_VERSION = '0.11'
 THREADPOOLCTL_MIN_VERSION = '2.0.0'
 
+MATPLOTLIB_MIN_VERSION = '2.1.1'
+SCIKIT_IMAGE_MIN_VERSION ='0.13'
+PANDAS_MIN_VERSION = '0.18.0'
+SEABORN_MIN_VERSION = '0.9.0'
+PYTEST_MIN_VERSION = '3.3.0'
+
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
 # as it monkey-patches the 'setup' function
@@ -261,6 +267,15 @@ def setup_package():
                         'joblib>={}'.format(JOBLIB_MIN_VERSION),
                         'threadpoolctl>={}'.format(THREADPOOLCTL_MIN_VERSION)
                     ],
+                    extras_require={
+                        "matplotlib":  ["matplotlib>={}"
+                    .format(MATPLOTLIB_MIN_VERSION)],
+                        "scikit-image": ["scikit-image>={}"
+                    .format(SCIKIT_IMAGE_MIN_VERSION)],
+                        "pandas": ["pandas>={}".format(PANDAS_MIN_VERSION)],
+                        "seaborn": ["seaborn>={}".format(SEABORN_MIN_VERSION)],
+                        "pytest": ["pytest>={}".format(PYTEST_MIN_VERSION)]
+                    },
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
 
