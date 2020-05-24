@@ -274,7 +274,11 @@ def setup_package():
                     .format(SCIKIT_IMAGE_MIN_VERSION)],
                         "pandas": ["pandas>={}".format(PANDAS_MIN_VERSION)],
                         "seaborn": ["seaborn>={}".format(SEABORN_MIN_VERSION)],
-                        "pytest": ["pytest>={}".format(PYTEST_MIN_VERSION)]
+                        "pytest": ["pytest>={}".format(PYTEST_MIN_VERSION),
+                                   "pytest-cov"],
+                        "cython": ["cython"],
+                        "flake8": ["flake8"],
+                        "mypy": ["mypy"]
                     },
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
