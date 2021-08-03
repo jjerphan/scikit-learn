@@ -2,7 +2,7 @@ import itertools
 import pickle
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 import pytest
 
@@ -11,6 +11,7 @@ from sklearn.metrics import DistanceMetric
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils.fixes import sp_version, parse_version
+from scipy.sparse import csr_matrix
 
 
 def dist_func(x1, x2, p):
@@ -23,6 +24,14 @@ n1 = 20
 n2 = 25
 X1 = rng.random_sample((n1, d)).astype("float64", copy=False)
 X2 = rng.random_sample((n2, d)).astype("float64", copy=False)
+
+X1_sparse = X1.copy()
+X1_sparse[X1_sparse < 0.5] = 0
+X1_csr = csr_matrix(X1_sparse)
+
+X2_sparse = X2.copy()
+X2_sparse[X2_sparse < 0.5] = 0
+X2_csr = csr_matrix(X2_sparse)
 
 [X1_mmap, X2_mmap] = create_memmap_backed_data([X1, X2])
 
@@ -242,3 +251,28 @@ def test_input_data_size():
     pyfunc = DistanceMetric.get_metric("pyfunc", func=custom_metric)
     eucl = DistanceMetric.get_metric("euclidean")
     assert_array_almost_equal(pyfunc.pairwise(X), eucl.pairwise(X) ** 2)
+
+
+def test_csr_csr_pdist_consistency():
+    metric = "euclidean"
+
+    dm = DistanceMetric.get_metric(metric)
+
+    expected_dist = dm.pairwise(X1, X2)
+    actual_dist = dm.pairwise(X1_csr, X2_csr)
+
+    assert_array_equal(expected_dist, actual_dist)
+
+
+def test_csr_dense_pdist_consistency():
+    metric = "euclidean"
+
+    dm = DistanceMetric.get_metric(metric)
+
+    expected_dist = dm.pairwise(X1, X2)
+
+    actual_dist = dm.pairwise(X1, X2_csr)
+    assert_array_equal(expected_dist, actual_dist)
+
+    actual_dist_2 = dm.pairwise(X1_csr, X2)
+    assert_array_equal(expected_dist, actual_dist_2)

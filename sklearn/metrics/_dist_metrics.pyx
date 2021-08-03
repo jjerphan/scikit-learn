@@ -9,6 +9,7 @@
 
 import numpy as np
 cimport numpy as np
+from scipy.sparse import issparse
 np.import_array()  # required in order to use C-API
 
 
@@ -467,23 +468,80 @@ cdef class DistanceMetric:
         """
         cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Xarr
         cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Yarr
+
+        cdef np.ndarray[DTYPE_t, ndim=1, mode='c'] X_data
+        cdef np.ndarray[ITYPE_t, ndim=1, mode='c'] X_indices
+        cdef np.ndarray[ITYPE_t, ndim=1, mode='c'] X_indptr
+
+        cdef np.ndarray[DTYPE_t, ndim=1, mode='c'] Y_data
+        cdef np.ndarray[ITYPE_t, ndim=1, mode='c'] Y_indices
+        cdef np.ndarray[ITYPE_t, ndim=1, mode='c'] Y_indptr
+
         cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Darr
 
-        Xarr = np.asarray(X, dtype=DTYPE, order='C')
-        self._validate_data(Xarr)
         if Y is None:
-            Darr = np.zeros((Xarr.shape[0], Xarr.shape[0]),
-                         dtype=DTYPE, order='C')
-            self.pdist(Xarr, Darr)
+            Darr = np.zeros((X.shape[0], X.shape[0]), dtype=DTYPE, order="C")
+
+            if issparse(X):
+                self.csr_pdist(X.data, X.indices, X.indptr, Darr)
+            else:
+                Xarr_dense = np.asarray(X, dtype=DTYPE, order='C')
+                self._validate_data(Xarr_dense)
+
+                self.pdist(Xarr_dense, Darr)
         else:
-            Yarr = np.asarray(Y, dtype=DTYPE, order='C')
-            self._validate_data(Yarr)
-            Darr = np.zeros((Xarr.shape[0], Yarr.shape[0]),
-                         dtype=DTYPE, order='C')
-            self.cdist(Xarr, Yarr, Darr)
+            Darr = np.zeros((X.shape[0], Y.shape[0]), dtype=DTYPE, order="C")
+
+            if issparse(X) and issparse(Y):
+
+                X_data = np.asarray(X.data, dtype=DTYPE, order="C")
+                X_indices = np.asarray(X.indices, dtype=ITYPE, order="C")
+                X_indptr = np.asarray(X.indptr, dtype=ITYPE, order="C")
+                
+                Y_data = np.asarray(Y.data, dtype=DTYPE, order="C")
+                Y_indices = np.asarray(Y.indices, dtype=ITYPE, order="C")
+                Y_indptr = np.asarray(Y.indptr, dtype=ITYPE, order="C")
+
+                self.csr_cdist(
+                    X_data, X_indices, X_indptr,
+                    Y_data, Y_indices, Y_indptr,
+                    Darr)
+            elif issparse(X):
+                X_data = np.asarray(X.data, dtype=DTYPE, order="C")
+                X_indices = np.asarray(X.indices, dtype=ITYPE, order="C")
+                X_indptr = np.asarray(X.indptr, dtype=ITYPE, order="C")
+
+                Yarr_dense = np.asarray(Y, dtype=DTYPE, order="C")
+                self._validate_data(Yarr_dense)
+
+                self.csr_dense_cdist(
+                    X_data, X_indices, X_indptr,
+                    Yarr_dense,
+                    Darr
+                )
+            elif issparse(Y):
+                Y_data = np.asarray(Y.data, dtype=DTYPE, order="C")
+                Y_indices = np.asarray(Y.indices, dtype=ITYPE, order="C")
+                Y_indptr = np.asarray(Y.indptr, dtype=ITYPE, order="C")
+
+                Xarr_dense = np.asarray(X, dtype=DTYPE, order='C')
+                self._validate_data(Xarr_dense)
+
+                self.csr_dense_cdist(
+                    Y_data, Y_indices, Y_indptr,
+                    Xarr_dense,
+                    Darr
+                )
+            else:
+                Xarr_dense = np.asarray(X, dtype=DTYPE, order='C')
+                self._validate_data(Xarr_dense)
+
+                Yarr_dense = np.asarray(Y, dtype=DTYPE, order='C')
+                self._validate_data(Yarr_dense)
+
+                self.cdist(Xarr_dense, Yarr_dense, Darr)
+        
         return Darr
-
-
 #------------------------------------------------------------
 # Euclidean Distance
 #  d = sqrt(sum(x_i^2 - y_i^2))
