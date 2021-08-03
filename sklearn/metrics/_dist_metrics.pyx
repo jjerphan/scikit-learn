@@ -316,22 +316,39 @@ cdef class DistanceMetric:
         """
         return self.dist(x1, x2, size)
 
-    cdef DTYPE_t sparse_dist(self, const DTYPE_t[:] x1_data,
-                      const ITYPE_t[:] x1_indices,
-                      const DTYPE_t[:] x2_data,
-                      const ITYPE_t[:] x2_indices,
+    cdef DTYPE_t csr_pdist(self, const DTYPE_t[:] x1_csr_data,
+                      const ITYPE_t[:] x1_csr_indices,
+                      const ITYPE_t[:] x1_csr_indptr,
+                      DTYPE_t[:, ::1] D,
+                      ) nogil except -1:
+        """Compute the reduced distance between vectors x1 and x2
+        given non null coordinates and their corresponding indices.
+        """
+        return self.csr_cdist(x1_csr_data, x1_csr_indices, x1_csr_indptr, x1_csr_data, x1_csr_indices, x1_csr_indptr, D)
+
+    cdef DTYPE_t csr_cdist(self, const DTYPE_t[:] x1_csr_data,
+                      const ITYPE_t[:] x1_csr_indices,
+                      const ITYPE_t[:] x1_csr_indptr,
+                      const DTYPE_t[:] x2_csr_data,
+                      const ITYPE_t[:] x2_csr_indices,
+                      const ITYPE_t[:] x2_csr_indptr,
+                      DTYPE_t[:, ::1] D,
                       ) nogil except -1:
         """Compute the reduced distance between vectors x1 and x2
         given non null coordinates and their corresponding indices.
 
         This should be overridden in a base class.
         """
+        
         return -999
 
-    cdef DTYPE_t sparse_rdist(self, const DTYPE_t[:] x1_data,
-                      const ITYPE_t[:] x1_indices,
-                      const DTYPE_t[:] x2_data,
-                      const ITYPE_t[:] x2_indices,
+    cdef DTYPE_t csr_rdist(self, const DTYPE_t[:] x1_csr_data,
+                      const ITYPE_t[:] x1_csr_indices,
+                      const ITYPE_t[:] x1_csr_indptr,
+                      const DTYPE_t[:] x2_csr_data,
+                      const ITYPE_t[:] x2_csr_indices,
+                      const ITYPE_t[:] x2_csr_indptr,
+                      DTYPE_t[:, ::1] D,
                       ) nogil except -1:
         """Compute the reduced distance between vectors x1 and x2
         given non null coordinates and their corresponding indices.
@@ -343,7 +360,21 @@ cdef class DistanceMetric:
         Euclidean metric, the reduced distance is the squared-euclidean
         distance.
         """
-        return self.sparse_dist(x1_data, x1_indices, x2_data, x2_indices)
+        return self.csr_cdist(x1_csr_data, x1_csr_indices, x1_csr_indptr, x2_csr_data, x2_csr_indices, x2_csr_indptr, D)
+
+    cdef DTYPE_t csr_dense_cdist(self, const DTYPE_t[:] x1_csr_data,
+                      const ITYPE_t[:] x1_csr_indices,
+                      const ITYPE_t[:] x1_csr_indptr,
+                      DTYPE_t[:, ::1] x2_dense,
+                      DTYPE_t[:, ::1] D,
+                      ) nogil except -1:
+        """Compute the reduced distance between a CSR sparse vector x1 and a dense
+        vector x2 given non null coordinates and their corresponding indices.
+
+        This should be overridden in a base class.
+        """
+
+        return -999
 
     cdef int pdist(self, const DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] D) except -1:
         """compute the pairwise distances between points in X"""
@@ -472,6 +503,32 @@ cdef class EuclideanDistance(DistanceMetric):
     cdef inline DTYPE_t rdist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
         return euclidean_rdist(x1, x2, size)
+
+    cdef DTYPE_t csr_cdist(self, const DTYPE_t[:] x1_csr_data,
+                      const ITYPE_t[:] x1_csr_indices,
+                      const ITYPE_t[:] x1_csr_indptr,
+                      const DTYPE_t[:] x2_csr_data,
+                      const ITYPE_t[:] x2_csr_indices,
+                      const ITYPE_t[:] x2_csr_indptr,
+                      DTYPE_t[:, ::1] D,
+                      ) nogil except -1:
+        """Compute the reduced distance between vectors x1 and x2
+        given non null coordinates and their corresponding indices.
+        """
+
+        return 0
+
+    cdef DTYPE_t csr_dense_cdist(self, const DTYPE_t[:] x1_csr_data,
+                      const ITYPE_t[:] x1_csr_indices,
+                      const ITYPE_t[:] x1_csr_indptr,
+                      DTYPE_t[:, ::1] x2_dense,
+                      DTYPE_t[:, ::1] D
+                      ) nogil except -1:
+        """Compute the reduced distance between a CSR sparse vector x1 and a dense
+        vector x2 given non null coordinates and their corresponding indices.
+        """
+
+        return 0
 
     cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return sqrt(rdist)

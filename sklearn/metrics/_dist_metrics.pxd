@@ -65,16 +65,35 @@ cdef class DistanceMetric:
     cdef DTYPE_t rdist(self, const DTYPE_t* x1, const DTYPE_t* x2,
                        ITYPE_t size) nogil except -1
 
-    cdef DTYPE_t sparse_dist(self, const DTYPE_t[:] x1_data,
-                      const ITYPE_t[:] x1_indices,
-                      const DTYPE_t[:] x2_data,
-                      const ITYPE_t[:] x2_indices,
+    cdef DTYPE_t csr_cdist(self, const DTYPE_t[:] x1_csr_data,
+                      const ITYPE_t[:] x1_csr_indices,
+                      const ITYPE_t[:] x1_csr_indptr,
+                      const DTYPE_t[:] x2_csr_data,
+                      const ITYPE_t[:] x2_csr_indices,
+                      const ITYPE_t[:] x2_csr_indptr,
+                      DTYPE_t[:, ::1] D,
                       ) nogil except -1
 
-    cdef DTYPE_t sparse_rdist(self, const DTYPE_t[:] x1_data,
-                      const ITYPE_t[:] x1_indices,
-                      const DTYPE_t[:] x2_data,
-                      const ITYPE_t[:] x2_indices,
+    cdef DTYPE_t csr_pdist(self, const DTYPE_t[:] x1_csr_data,
+                      const ITYPE_t[:] x1_csr_indices,
+                      const ITYPE_t[:] x1_csr_indptr,
+                      DTYPE_t[:, ::1] D
+                      ) nogil except -1
+
+    cdef DTYPE_t csr_rdist(self, const DTYPE_t[:] x1_csr_data,
+                      const ITYPE_t[:] x1_csr_indices,
+                      const ITYPE_t[:] x1_csr_indptr,
+                      const DTYPE_t[:] x2_csr_data,
+                      const ITYPE_t[:] x2_csr_indices,
+                      const ITYPE_t[:] x2_csr_indptr,
+                      DTYPE_t[:, ::1] D
+                      ) nogil except -1
+    
+    cdef DTYPE_t csr_dense_cdist(self, const DTYPE_t[:] x1_csr_data,
+                      const ITYPE_t[:] x1_csr_indices,
+                      const ITYPE_t[:] x1_csr_indptr,
+                      DTYPE_t[:, ::1] x2_dense,
+                      DTYPE_t[:, ::1] D
                       ) nogil except -1
 
     cdef int pdist(self, const DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] D) except -1
