@@ -23,7 +23,6 @@ from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import (
-    NearestNeighbors,
     VALID_METRICS_SPARSE,
     VALID_METRICS,
 )
@@ -57,7 +56,9 @@ SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix, dok_matrix, lil_
 SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
 ALGORITHMS = ("ball_tree", "brute", "kd_tree", "auto")
-COMMON_VALID_METRICS = set.intersection(*map(set, neighbors.VALID_METRICS.values()))
+COMMON_VALID_METRICS = sorted(
+    set.intersection(*map(set, neighbors.VALID_METRICS.values()))
+)
 P = (1, 2, 3, 4, np.inf)
 JOBLIB_BACKENDS = list(joblib.parallel.BACKENDS.keys())
 
@@ -1603,16 +1604,16 @@ def test_k_and_radius_neighbors_duplicates(algorithm):
     nn.fit(X)
     dist, ind = nn.kneighbors()
     assert_allclose(dist, np.zeros((3, 1)))
-    assert_allclose(ind, [[2], [2], [0]])
+    assert_allclose(ind, [[1], [0], [1]])
 
     # Test that zeros are explicitly marked in kneighbors_graph.
     kng = nn.kneighbors_graph(mode="distance")
     assert_allclose(kng.toarray(), np.zeros((3, 3)))
     assert_allclose(kng.data, np.zeros(3))
-    assert_allclose(kng.indices, [2.0, 2.0, 0.0])
+    assert_allclose(kng.indices, [1, 0, 1])
     assert_allclose(
         nn.kneighbors_graph().toarray(),
-        np.array([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]]),
+        np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
     )
 
 
@@ -1848,100 +1849,3 @@ def test_pairwise_deprecated(NearestNeighbors):
     msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
     with pytest.warns(FutureWarning, match=msg):
         nn._pairwise
-
-
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
-@pytest.mark.parametrize("n_features", [5, 10, 100])
-@pytest.mark.parametrize("ratio_train_test", [10, 2, 1, 0.5])
-@pytest.mark.parametrize("n_neighbors", [1, 10, 100, 1000])
-def test_fast_sqeuclidean_correctness(
-    n_samples,
-    n_features,
-    ratio_train_test,
-    n_neighbors,
-    dtype=np.float64,
-):
-    # The fast squared euclidean strategy must return results
-    # that are close to the ones obtained with the euclidean distance
-    if n_samples < n_neighbors:
-        pytest.skip(
-            f"Skipping as n_samples (={n_samples}) < n_neighbors (={n_neighbors})",
-            allow_module_level=True,
-        )
-
-    rng = np.random.RandomState(1)
-
-    spread = 100
-    X_train = (
-        rng.rand(int(n_samples * n_features)).astype(dtype).reshape((-1, n_features))
-        * spread
-    )
-    X_test = (
-        rng.rand(int(n_samples * n_features / ratio_train_test))
-        .astype(dtype)
-        .reshape((-1, n_features))
-        * spread
-    )
-
-    neigh = NearestNeighbors(
-        n_neighbors=n_neighbors, algorithm="brute", metric="euclidean"
-    ).fit(X_train)
-    eucl_dist, eucl_nn = neigh.kneighbors(
-        X=X_test, n_neighbors=n_neighbors, return_distance=True
-    )
-
-    fse_neigh = NearestNeighbors(
-        n_neighbors=n_neighbors, algorithm="brute", metric="fast_sqeuclidean"
-    ).fit(X_train)
-    fse_dist, fse_nn = fse_neigh.kneighbors(
-        X=X_test, n_neighbors=n_neighbors, return_distance=True
-    )
-
-    assert_allclose(eucl_dist, fse_dist)
-    assert_array_equal(eucl_nn, fse_nn)
-
-
-@pytest.mark.parametrize("n_samples", [10 ** i for i in [2, 3, 4]])
-@pytest.mark.parametrize("n_features", [5, 10, 100, 500])
-@pytest.mark.parametrize("n_neighbors", [1, 10, 100, 1000])
-@pytest.mark.parametrize("translation", [10 ** i for i in [2, 3, 4, 5, 6, 7]])
-@pytest.mark.skip(
-    reason=(
-        "Long test, translation invariance should have its own study: skipping for now"
-    )
-)
-def test_fast_sqeuclidean_translation_invariance(
-    n_samples,
-    n_features,
-    n_neighbors,
-    translation,
-    dtype=np.float64,
-):
-    # The fast squared euclidean strategy should be translation invariant.
-    if n_samples < n_neighbors:
-        pytest.skip(
-            f"Skipping as n_samples (={n_samples}) < n_neighbors (={n_neighbors})",
-            allow_module_level=True,
-        )
-
-    rng = np.random.RandomState(1)
-    spread = 100
-    X_train = rng.rand(n_samples, n_features).astype(dtype) * spread
-    X_test = rng.rand(n_samples, n_features).astype(dtype) * spread
-
-    neigh = NearestNeighbors(
-        n_neighbors=n_neighbors, algorithm="brute", metric="fast_sqeuclidean"
-    ).fit(X_train)
-    reference_dist, reference_nns = neigh.kneighbors(
-        X=X_test, n_neighbors=n_neighbors, return_distance=True
-    )
-
-    neigh = NearestNeighbors(
-        n_neighbors=n_neighbors, algorithm="brute", metric="fast_sqeuclidean"
-    ).fit(X_train + translation)
-    dist, nns = neigh.kneighbors(
-        X=X_test + translation, n_neighbors=n_neighbors, return_distance=True
-    )
-
-    assert_allclose(reference_dist, dist)
-    assert_array_equal(reference_nns, nns)
