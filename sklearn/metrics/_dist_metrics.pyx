@@ -563,6 +563,47 @@ cdef class EuclideanDistance(DistanceMetric):
         """Compute the reduced distance between vectors x1 and x2
         given non null coordinates and their corresponding indices.
         """
+        cdef np.npy_intp px, py, i, j, ix, iy
+        cdef double d = 0.0
+
+        cdef int m = D.shape[0]
+        cdef int n = D.shape[1]
+
+        cdef int x1_csr_indptr_end = 0
+        cdef int x2_csr_indptr_end = 0
+
+        for px in range(m):
+            x1_csr_indptr_end = x1_csr_indptr[px + 1]
+            for py in range(n):
+                x2_csr_indptr_end = x2_csr_indptr[py + 1]
+                i = x1_csr_indptr[px]
+                j = x2_csr_indptr[py]
+                d = 0.0
+                while i < x1_csr_indptr_end and j < x2_csr_indptr_end:
+                    ix = x1_csr_indices[i]
+                    iy = x2_csr_indices[j]
+
+                    if ix == iy:
+                        d = d + (x1_csr_data[i] - x2_csr_data[j]) ** 2
+                        i = i + 1
+                        j = j + 1
+                    elif ix < iy:
+                        d = d + (x1_csr_data[i]) ** 2
+                        i = i + 1
+                    else:
+                        d = d + (x2_csr_data[j]) ** 2
+                        j = j + 1
+
+                if i == x1_csr_indptr_end:
+                    while j < x2_csr_indptr_end:
+                        d = d + (x2_csr_data[j]) ** 2
+                        j = j + 1
+                else:
+                    while i < x1_csr_indptr_end:
+                        d = d + (x1_csr_data[i]) ** 2
+                        i = i + 1
+
+                D[px, py] = sqrt(d)
 
         return 0
 
