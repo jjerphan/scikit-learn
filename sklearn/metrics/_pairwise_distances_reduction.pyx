@@ -8,7 +8,6 @@
 # cython: binding=False
 # distutils: define_macros=CYTHON_TRACE_NOGIL=0
 import numbers
-
 import numpy as np
 cimport numpy as np
 
@@ -32,16 +31,16 @@ from ..utils._cython_blas cimport (
   Trans,
   _gemm,
 )
-from ..utils._heap cimport _simultaneous_sort, _push
+from ..utils._heap cimport simultaneous_sort, heap_push
 from ..utils._openmp_helpers cimport _openmp_thread_num
 from ..utils._typedefs cimport ITYPE_t, DTYPE_t, DITYPE_t
 from ..utils._typedefs cimport ITYPECODE, DTYPECODE
 
-
-from scipy.sparse import issparse, spmatrix
+from typing import List
+from scipy.sparse import issparse
 from threadpoolctl import threadpool_limits
-from ._dist_metrics import METRIC_MAPPING
-from ..utils import check_array, check_scalar
+from ._dist_metrics import BOOL_METRICS, METRIC_MAPPING
+from ..utils import check_array, check_scalar, in_unstable_openblas_configuration
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils._typedefs import ITYPE, DTYPE
 
@@ -121,6 +120,7 @@ cdef np.ndarray vector_to_numpy_array(vector_DITYPE_t * vect_ptr):
     # Makes the numpy array responsible to the life-cycle of its buffer.
     # A reference to the sentinel will be stolen by the call bellow,
     # so we increase its reference count.
+    # See: https://docs.python.org/3/c-api/intro.html#reference-count-details
     Py_INCREF(sentinel)
     PyArray_SetBaseObject(arr, <PyObject*>sentinel)
     return arr
@@ -166,10 +166,17 @@ cdef class PairwiseDistancesReduction:
         ITYPE_t n_Y, Y_n_samples_chunk, Y_n_chunks, Y_n_samples_remainder
 
     @classmethod
-    def valid_metrics(cls):
-        # TODO: support those distances
-        excluded = {"pyfunc", "sokalmichener", "matching", "jaccard"}
-        return sorted({*METRIC_MAPPING.keys()}.difference(excluded))
+    def valid_metrics(cls) -> List[str]:
+        excluded = {
+            "pyfunc",  # is relatively slow because we need to coerce data as numpy arrays
+            "mahalanobis", # is numerically unstable
+            # TODO: In order to support discrete distance metrics, we need to have a
+            # simultaneous sort which breaks ties on indices when distances are identical.
+            # The best might be using std::sort and a Comparator.
+            "hamming",
+            *BOOL_METRICS,
+        }
+        return sorted({"fast_sqeuclidean", *METRIC_MAPPING.keys()}.difference(excluded))
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
@@ -182,8 +189,8 @@ cdef class PairwiseDistancesReduction:
                 metric in cls.valid_metrics())
 
     def __init__(self,
-                 DatasetsPair datasets_pair,
-                 ITYPE_t chunk_size = CHUNK_SIZE,
+        DatasetsPair datasets_pair,
+        ITYPE_t chunk_size = CHUNK_SIZE,
     ):
         cdef:
             ITYPE_t X_n_full_chunks, Y_n_full_chunks
@@ -287,7 +294,6 @@ cdef class PairwiseDistancesReduction:
             ITYPE_t num_threads = min(self.Y_n_chunks, self.effective_omp_n_thread)
             ITYPE_t thread_num
 
-        # TODO: put the "with nogil, parallel"-context here
         # Allocating datastructures
         self._on_Y_init(num_threads)
 
@@ -321,12 +327,10 @@ cdef class PairwiseDistancesReduction:
             # end: with nogil, parallel
 
             # Synchronizing the thread datastructures with the main ones
-            # This can potentially block
             self._on_Y_after_parallel(num_threads, X_start, X_end)
 
         # end: for X_chunk_idx
-        # Deallocating temporary datastructures
-        # Adjusting main datastructures before returning
+        # Deallocating temporary datastructures and adjusting main datastructures before returning
         self._on_Y_finalize(num_threads)
         return
 
@@ -430,18 +434,14 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         ITYPE_t ** heaps_indices_chunks
 
     @classmethod
-    def valid_metrics(cls):
-        return {"fast_sqeuclidean", *PairwiseDistancesReduction.valid_metrics()}
-
-    @classmethod
     def get_for(cls,
-                X,
-                Y,
-                ITYPE_t k,
-                str metric="fast_sqeuclidean",
-                ITYPE_t chunk_size=CHUNK_SIZE,
-                dict metric_kwargs=dict(),
-        ):
+        X,
+        Y,
+        ITYPE_t k,
+        str metric="fast_sqeuclidean",
+        ITYPE_t chunk_size=CHUNK_SIZE,
+        dict metric_kwargs=dict(),
+    ) -> ArgKmin:
         # This factory comes to handle specialisations.
         if metric == "fast_sqeuclidean":
             return FastSquaredEuclideanArgKmin(X=X, Y=Y, k=k, chunk_size=chunk_size)
@@ -498,11 +498,13 @@ cdef class ArgKmin(PairwiseDistancesReduction):
         # which keep tracks of the argkmin.
         for i in range(n_X):
             for j in range(n_Y):
-                _push(heaps_proxy_distances + i * self.k,
-                      heaps_indices + i * self.k,
-                      k,
-                      self.datasets_pair.proxy_dist(X_start + i, Y_start + j),
-                      Y_start + j)
+                heap_push(
+                    heaps_proxy_distances + i * self.k,
+                    heaps_indices + i * self.k,
+                    k,
+                    self.datasets_pair.proxy_dist(X_start + i, Y_start + j),
+                    Y_start + j,
+                )
 
         return 0
 
@@ -529,7 +531,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
 
         # Sorting indices of the argkmin for each query vector of X
         for idx in range(X_end - X_start):
-            _simultaneous_sort(
+            simultaneous_sort(
                 self.heaps_proxy_distances_chunks[thread_num] + idx * self.k,
                 self.heaps_indices_chunks[thread_num] + idx * self.k,
                 self.k
@@ -578,7 +580,7 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             for idx in prange(X_end - X_start, schedule="static"):
                 for thread_num in range(num_threads):
                     for jdx in range(self.k):
-                        _push(
+                        heap_push(
                             &self.argkmin_distances[X_start + idx, 0],
                             &self.argkmin_indices[X_start + idx, 0],
                             self.k,
@@ -601,13 +603,15 @@ cdef class ArgKmin(PairwiseDistancesReduction):
             # Sort the main heaps into arrays in parallel
             # in ascending order w.r.t the distances
             for idx in prange(self.n_X, schedule='static'):
-                _simultaneous_sort(
+                simultaneous_sort(
                     &self.argkmin_distances[idx, 0],
                     &self.argkmin_indices[idx, 0],
                     self.k,
                 )
         return
 
+    # TODO: annotating with 'final' here makes the compilation fails but it should not
+    # @final
     cdef void compute_exact_distances(self) nogil:
         cdef:
             ITYPE_t i, j
@@ -697,6 +701,7 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
     cdef:
         const DTYPE_t[:, ::1] X
         const DTYPE_t[:, ::1] Y
+        const DTYPE_t[::1] X_sq_norms
         const DTYPE_t[::1] Y_sq_norms
 
         # Buffers for GEMM
@@ -715,6 +720,7 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
             chunk_size=chunk_size)
         self.X = check_array(X, dtype=DTYPE, order='C')
         self.Y = check_array(Y, dtype=DTYPE, order='C')
+        self.X_sq_norms = np.einsum('ij,ij->i', self.X, self.X)
         self.Y_sq_norms = np.einsum('ij,ij->i', self.Y, self.Y)
         # Temporary datastructures used in threads
         self.dist_middle_terms_chunks = <DTYPE_t **> malloc(
@@ -764,22 +770,6 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
             free(self.dist_middle_terms_chunks[thread_num])
 
     @final
-    cdef void compute_exact_distances(self) nogil:
-        cdef:
-            ITYPE_t i, j
-            ITYPE_t[:, ::1] Y_indices = self.argkmin_indices
-            DTYPE_t[:, ::1] distances = self.argkmin_distances
-
-        for i in prange(self.n_X, schedule='static', nogil=True,
-                        num_threads=self.effective_omp_n_thread):
-            for j in range(self.k):
-                # This time we have no other choice but to recompute distances
-                # because we don't take ||X_c||² in the reduction
-                # TODO: introduce ||X_c||² for FastSquaredEuclideanArgKmin
-                # and factorise code shared with FastSquaredEuclideanRadiusNeighborhood?
-                distances[i, j] = self.datasets_pair.dist(i, Y_indices[i, j])
-
-    @final
     cdef int _reduce_on_chunks(self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -795,24 +785,19 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         """
         cdef:
             ITYPE_t i, j
+            ITYPE_t k = self.k
+
             const DTYPE_t[:, ::1] X_c = self.X[X_start:X_end, :]
             const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
-            ITYPE_t k = self.k
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
             DTYPE_t *heaps_proxy_distances = self.heaps_proxy_distances_chunks[thread_num]
             ITYPE_t *heaps_indices = self.heaps_indices_chunks[thread_num]
 
-            # Instead of computing the full pairwise squared distances matrix,
+            # We compute the full pairwise squared distances matrix as follows
             #
             #      ||X_c - Y_c||² = ||X_c||² - 2 X_c.Y_c^T + ||Y_c||²,
             #
-            # we only need to store the
-            #                                - 2 X_c.Y_c^T + ||Y_c||²
-            #
-            # term since the argkmin for a given sample X_c^{i} does not depend on
-            # ||X_c^{i}||²
-            #
-            # This term gets computed efficiently bellow using GEMM from BLAS Level 3.
+            # The middle term gets computed efficiently bellow using GEMM from BLAS Level 3.
             #
             # Careful: LDA, LDB and LDC are given for F-ordered arrays in BLAS documentations,
             # for instance:
@@ -844,12 +829,18 @@ cdef class FastSquaredEuclideanArgKmin(ArgKmin):
         # which keep tracks of the argkmin.
         for i in range(X_c.shape[0]):
             for j in range(Y_c.shape[0]):
-                _push(heaps_proxy_distances + i * k,
-                      heaps_indices + i * k,
-                      k,
-                      # proxy distance: - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
-                      dist_middle_terms[i * Y_c.shape[0] + j] + self.Y_sq_norms[j + Y_start],
-                      j + Y_start)
+                heap_push(
+                    heaps_proxy_distances + i * k,
+                    heaps_indices + i * k,
+                    k,
+                    # proxy distance: |X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+                    (
+                        self.X_sq_norms[i + X_start] +
+                        dist_middle_terms[i * Y_c.shape[0] + j] +
+                        self.Y_sq_norms[j + Y_start]
+                    ),
+                    j + Y_start,
+                )
         return 0
 
 
@@ -903,18 +894,14 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         bint sort_results
 
     @classmethod
-    def valid_metrics(cls):
-        return {"fast_sqeuclidean", *PairwiseDistancesReduction.valid_metrics()}
-
-    @classmethod
     def get_for(cls,
-                X,
-                Y,
-                DTYPE_t radius,
-                str metric="fast_sqeuclidean",
-                ITYPE_t chunk_size=CHUNK_SIZE,
-                dict metric_kwargs=dict(),
-        ):
+        X,
+        Y,
+        DTYPE_t radius,
+        str metric="fast_sqeuclidean",
+        ITYPE_t chunk_size=CHUNK_SIZE,
+        dict metric_kwargs=dict(),
+    ) -> RadiusNeighborhood:
         # This factory comes to handle specialisations.
         if metric == "fast_sqeuclidean":
             return FastSquaredEuclideanRadiusNeighborhood(X=X, Y=Y,
@@ -997,7 +984,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
         # Sorting neighbors for each query vector of X
         if self.sort_results:
             for idx in range(X_start, X_end):
-                _simultaneous_sort(
+                simultaneous_sort(
                     deref(self.neigh_distances)[idx].data(),
                     deref(self.neigh_indices)[idx].data(),
                     deref(self.neigh_indices)[idx].size()
@@ -1073,7 +1060,7 @@ cdef class RadiusNeighborhood(PairwiseDistancesReduction):
             # Sort in parallel in ascending order w.r.t the distances if needed
             if self.sort_results:
                 for idx in prange(self.n_X, schedule='static'):
-                    _simultaneous_sort(
+                    simultaneous_sort(
                         deref(self.neigh_distances)[idx].data(),
                         deref(self.neigh_indices)[idx].data(),
                         deref(self.neigh_indices)[idx].size()
@@ -1248,6 +1235,8 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
         """
         cdef:
             ITYPE_t i, j
+            DTYPE_t squared_dist_i_j
+
             const DTYPE_t[:, ::1] X_c = self.X[X_start:X_end, :]
             const DTYPE_t[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num]
@@ -1280,9 +1269,6 @@ cdef class FastSquaredEuclideanRadiusNeighborhood(RadiusNeighborhood):
             DTYPE_t beta = 0.
             DTYPE_t * C = dist_middle_terms
             ITYPE_t ldc = Y_c.shape[0]
-
-            DTYPE_t squared_dist_i_j
-
 
         # dist_middle_terms = -2 * X_c.dot(Y_c.T)
         _gemm(order, ta, tb, m, n, K, alpha, A, lda, B, ldb, beta, C, ldc)

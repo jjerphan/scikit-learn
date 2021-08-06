@@ -8,6 +8,7 @@ import pytest
 
 from scipy.spatial.distance import cdist
 from sklearn.metrics import DistanceMetric
+from sklearn.metrics._dist_metrics import BOOL_METRICS
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils.fixes import sp_version, parse_version
@@ -45,16 +46,6 @@ X2_bool = X2.round(0)
 V = rng.random_sample((d, d))
 VI = np.dot(V, V.T)
 
-BOOL_METRICS = [
-    "matching",
-    "jaccard",
-    "dice",
-    "kulsinski",
-    "rogerstanimoto",
-    "russellrao",
-    "sokalmichener",
-    "sokalsneath",
-]
 
 METRICS_DEFAULT_PARAMS = {
     "euclidean": {},
@@ -68,6 +59,16 @@ METRICS_DEFAULT_PARAMS = {
     "canberra": {},
     "braycurtis": {},
 }
+
+
+# TODO: remove this test in 1.2
+def test_neighbors_distance_metric_deprecation():
+    from sklearn.neighbors import DistanceMetric as DeprecatedDistanceMetric
+
+    with pytest.warns(
+        FutureWarning, match="sklearn.neighbors.DistanceMetric has been moved"
+    ):
+        DeprecatedDistanceMetric.get_metric("euclidean")
 
 
 @pytest.mark.parametrize("metric", METRICS_DEFAULT_PARAMS)

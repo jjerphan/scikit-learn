@@ -48,7 +48,12 @@ import numpy as np
 import joblib
 
 import sklearn
-from sklearn.utils import IS_PYPY, _IS_32BIT, deprecated
+from sklearn.utils import (
+    IS_PYPY,
+    _IS_32BIT,
+    deprecated,
+    in_unstable_openblas_configuration,
+)
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
@@ -446,6 +451,10 @@ try:
         os.environ.get("TRAVIS") == "true", reason="skip on travis"
     )
     fails_if_pypy = pytest.mark.xfail(IS_PYPY, reason="not compatible with PyPy")
+    fails_if_unstable_openblas = pytest.mark.xfail(
+        in_unstable_openblas_configuration(),
+        reason="OpenBLAS is unstable for this configuration",
+    )
     skip_if_no_parallel = pytest.mark.skipif(
         not joblib.parallel.mp, reason="joblib is in serial mode"
     )
@@ -1039,3 +1048,24 @@ class MinimalTransformer:
 
     def fit_transform(self, X, y=None):
         return self.fit(X, y).transform(X, y)
+
+
+def get_dummy_metric_kwargs(metric: str, n_features: int):
+    """Return dummy DistanceMetric kwargs for tests."""
+    rng = np.random.RandomState(1)
+    weights = rng.random_sample(n_features)
+    weights /= weights.sum()
+
+    V = rng.random_sample((n_features, n_features))
+
+    # VI is positive-semidefinite, preferred for precision matrix
+    VI = np.dot(V, V.T) + 3 * np.eye(n_features)
+
+    kwargs = {
+        "minkowski": dict(p=1.5),
+        "seuclidean": dict(V=weights),
+        "wminkowski": dict(p=1.5, w=weights),
+        "mahalanobis": dict(VI=VI),
+    }
+
+    return kwargs.get(metric, {})

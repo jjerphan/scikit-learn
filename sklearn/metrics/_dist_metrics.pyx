@@ -78,6 +78,16 @@ METRIC_MAPPING = {'euclidean': EuclideanDistance,
                   'haversine': HaversineDistance,
                   'pyfunc': PyFuncDistance}
 
+BOOL_METRICS = [
+    "matching",
+    "jaccard",
+    "dice",
+    "kulsinski",
+    "rogerstanimoto",
+    "russellrao",
+    "sokalmichener",
+    "sokalsneath",
+]
 
 def get_valid_metric_ids(L):
     """Given an iterable of metric class names or class identifiers,
@@ -1353,8 +1363,12 @@ cdef class DatasetsPair:
     """
 
     @classmethod
-    def get_for(cls, X, Y, str metric="euclidean",
-                dict metric_kwargs=dict()) -> DatasetsPair:
+    def get_for(cls,
+        X,
+        Y,
+        str metric="euclidean",
+        dict metric_kwargs=dict(),
+    ) -> DatasetsPair:
         cdef:
             DistanceMetric distance_metric = DistanceMetric.get_metric(metric,
                                                                  **metric_kwargs)
@@ -1567,7 +1581,7 @@ cdef class SparseDenseDatasetsPair(DatasetsPair):
         self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
 
         self.Y = check_array(Y, dtype=DTYPE)
-        self.Y_indices = np.arange(self.Y.shape[1])
+        self.Y_indices = np.arange(self.Y.shape[1], dtype=ITYPE)
 
     @property
     @final
