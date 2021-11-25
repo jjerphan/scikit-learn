@@ -9,28 +9,26 @@ from .common import Benchmark
 
 N_SAMPLES = [10_000]
 N_FEATURES = [50, 100, 500]
-
+K = [1, 10, 100, 1000]
 
 class BruteForceNearestNeighborsBenchmark(Benchmark):
     """
-    Benchmarks for KNeighborsMixin.kneighbors and
-    RadiusNeighborsMixin.radius_neighbors,
+    Benchmarks for KNeighborsMixin.kneighbors
     when using algorithm='brute'.
     """
 
-    param_names = ["n_train", "n_test", "n_features", "k_radius"]
+    param_names = ["n_train", "n_test", "n_features", "k"]
     params = (
         N_SAMPLES,
         N_SAMPLES,
         N_FEATURES,
-        [(1, 1), (10, 10), (100, 100), (1000, 1000)],
+        K,
     )
 
     def setup(self, *params):
-        n_train, n_test, n_features, (k, radius) = params
+        n_train, n_test, n_features, k = params
         self.nn = NearestNeighbors(
             n_neighbors=k,
-            radius=radius * np.log(n_features),
             algorithm="brute",
         )
 
@@ -46,8 +44,7 @@ class BruteForceNearestNeighborsBenchmark(Benchmark):
 
 class BruteForcePairwiseDistancesArgminBenchmark(Benchmark):
     """
-    Benchmarks for KNeighborsMixin.kneighbors and
-    RadiusNeighborsMixin.radius_neighbors,
+    Benchmarks for KNeighborsMixin.kneighbors
     when using algorithm='brute'.
     """
 
@@ -67,14 +64,14 @@ class BruteForcePairwiseDistancesArgminBenchmark(Benchmark):
 
     def time_pairwise_distances_argmin(self, *params):
         pairwise_distances_argmin(
-                X=self.X_test,
-                Y=self.X_train,
+            X=self.X_test,
+            Y=self.X_train,
         )
 
     def time_pairwise_distances_argmin_min(self, *params):
         pairwise_distances_argmin_min(
-                X=self.X_test,
-                Y=self.X_train,
+            X=self.X_test,
+            Y=self.X_train,
         )
 
 
@@ -101,9 +98,6 @@ class BruteForceBirchBenchmark(Benchmark):
         self.est_predict = Birch()
         self.est_predict.fit(X=self.X_train)
 
-    # def time_fit(self, *params):
-    #     self.est_fit.fit(self.X_train)
-
     def time_predict(self, *params):
         self.est_predict.predict(self.X_test)
 
@@ -127,9 +121,6 @@ class BruteForceOPTICSBenchmark(Benchmark):
 
         self.est_fit = OPTICS(algorithm="brute")
 
-    # def time_fit(self, *params):
-    #     self.est_fit.fit(self.X_train)
-
 
 class BruteForceDBSCANBenchmark(Benchmark):
     """
@@ -149,9 +140,6 @@ class BruteForceDBSCANBenchmark(Benchmark):
         self.X_train = self.rng.random_sample((n_train, n_features))
 
         self.est_fit = DBSCAN(algorithm="brute")
-
-    # def time_fit(self, *params):
-    #     self.est_fit.fit(self.X_train)
 
 
 class BruteForceIsomapBenchmark(Benchmark):
@@ -177,8 +165,6 @@ class BruteForceIsomapBenchmark(Benchmark):
         self.est_transform = Isomap(neighbors_algorithm="brute")
         self.est_transform.fit(X=self.X_train)
 
-    # def time_fit(self, *params):
-    #     self.est_fit.fit(self.X_train)
 
     def time_transform(self, *params):
         self.est_transform.transform(self.X_test)
@@ -200,5 +186,3 @@ class BruteForceLocalOutlierFactorBenchmark(Benchmark):
 
         self.est_fit = LocalOutlierFactor(algorithm="brute")
 
-    # def time_fit(self, *params):
-    #     self.est_fit.fit(self.X_train)

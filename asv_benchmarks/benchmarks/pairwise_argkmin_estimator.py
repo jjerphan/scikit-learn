@@ -31,7 +31,7 @@ class PairwiseDistancesArgKminBenchmark(Benchmark):
 
     param_names = ["n_train", "n_test", "n_features"]
     params = [
-        [1000, 10_000, 100_000],
+        [1000, 10_000],
         [1000, 10_000, 100_000],
         [100],
     ]
