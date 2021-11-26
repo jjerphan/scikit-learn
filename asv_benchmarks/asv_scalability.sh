@@ -10,7 +10,7 @@ do
   last_core=$(($i-1))
     taskset -c 0-$last_core \
     asv continuous -b PairwiseDistancesArgKmin \
-    -e -q main pairwise-distances-argkmin | tee pairwise_distances_argkmin_asv_${i}_cores.txt
+    -e main pairwise-distances-argkmin | tee pairwise_distances_argkmin_asv_${i}_cores.txt
     cp -R results results_${i}_cores
 done
 
