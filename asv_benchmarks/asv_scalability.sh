@@ -1,18 +1,4 @@
 #!/usr/bin/env bash
-#
-# Launch a ASV benchmark on groups of CPU
-# for scalability inspection
-#
-# Results are saved in given folders and files.
-#
-for i in 20 16 8 4 2 1;
-do
-  last_core=$(($i-1))
-    taskset -c 0-$last_core \
-    asv continuous -b PairwiseDistancesArgKmin \
-    -e main pairwise-distances-argkmin | tee pairwise_distances_argkmin_asv_${i}_cores.txt
-    cp -R results results_${i}_cores
-done
-
-
+asv run -b ArgKmin -e pairwise-distances-argkmin^! | tee pda.txt
+asv run -b ArgKmin -e 1.0^! | tee 1.0.txt
 

@@ -76,7 +76,7 @@
         "scipy": [],
         "cython": [],
         "joblib": [],
-        "threadpoolctl": []
+        "pip+threadpoolctl": "3.0.0"
     },
 
     // Combinations of libraries/python versions can be excluded/included
