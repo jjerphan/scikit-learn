@@ -38,10 +38,10 @@ class PairwiseDistancesArgKminBenchmark(Benchmark):
     ]
 
     params = [
-        [1, 2, 4, 8, 16, 20],
-        [1000, 10_000],
+        [1, 2, 4, 8, 16, 32, 64, 128],
         [1000, 10_000, 100_000],
-        [100],
+        [1000, 10_000, 100_000],
+        [50, 100],
     ]
 
     def __init__(self):
