@@ -235,12 +235,6 @@ def test_neighs_predictions_fast_euclidean_correctness(
 ):
     # The fast euclidean strategy must return results
     # that are close to the ones obtained with the euclidean distance
-    if n_samples < n_neighbors:
-        pytest.skip(
-            f"Skipping as n_samples (={n_samples}) < n_neighbors (={n_neighbors})",
-            allow_module_level=True,
-        )
-
     rng = np.random.RandomState(0)
     X = rng.rand(n_samples, n_features).astype(dtype)
     y = rng.randint(3, size=n_samples)
@@ -1516,35 +1510,15 @@ def test_neighbors_metrics(
     # Test computing the neighbors for various metrics
     # create a symmetric matrix
     algorithms = ["brute", "ball_tree", "kd_tree"]
-    X = rng.rand(n_samples, n_features)
-    test = rng.rand(n_query_pts, n_features)
-
-    # Haversine distance only accepts 2D data
-    if metric == "haversine":
-        feature_sl = slice(None, 2)
-        X_train = np.ascontiguousarray(X[:, feature_sl])
-        X_test = np.ascontiguousarray(test[:, feature_sl])
-    else:
-        X_train = X
-        X_test = test
+    X_train = rng.rand(n_samples, n_features)
+    X_test = rng.rand(n_query_pts, n_features)
 
     metric_params_list = _get_dummy_metric_params_list(metric, n_features)
 
     for metric_params in metric_params_list:
         results = {}
         p = metric_params.pop("p", 2)
-        w = metric_params.get("w", None)
         for algorithm in algorithms:
-            # KD tree doesn't support all metrics
-            if algorithm == "kd_tree" and (
-                metric not in neighbors.KDTree.valid_metrics or w is not None
-            ):
-                est = neighbors.NearestNeighbors(
-                    algorithm=algorithm, metric=metric, metric_params=metric_params
-                )
-                with pytest.raises(ValueError):
-                    est.fit(X)
-                continue
             neigh = neighbors.NearestNeighbors(
                 n_neighbors=n_neighbors,
                 algorithm=algorithm,
@@ -1553,10 +1527,7 @@ def test_neighbors_metrics(
                 metric_params=metric_params,
             )
 
-            # Haversine distance only accepts 2D data
-            feature_sl = slice(None, 2) if metric == "haversine" else slice(None)
-
-            neigh.fit(X[:, feature_sl])
+            neigh.fit(X_train)
 
             # wminkoski is deprecated in SciPy 1.6.0 and removed in 1.8.0
             ExceptionToAssert = None
@@ -1568,27 +1539,20 @@ def test_neighbors_metrics(
                 ExceptionToAssert = DeprecationWarning
 
             with pytest.warns(ExceptionToAssert):
-                results[algorithm] = neigh.kneighbors(
-                    test[:, feature_sl], return_distance=True
-                )
-
-            neigh.fit(X_train)
-            results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
+                results[algorithm] = neigh.kneighbors(X_test, return_distance=True)
 
         brute_dst, brute_idx = results["brute"]
+        kd_tree_dst, kd_tree_idx = results["kd_tree"]
         ball_tree_dst, ball_tree_idx = results["ball_tree"]
 
         assert_allclose(brute_dst, ball_tree_dst)
         assert_array_equal(brute_idx, ball_tree_idx)
 
-        if "kd_tree" in results:
-            # KD tree might not have been computed
-            kd_tree_dst, kd_tree_idx = results["kd_tree"]
-            assert_allclose(brute_dst, kd_tree_dst)
-            assert_array_equal(brute_idx, kd_tree_idx)
+        assert_allclose(brute_dst, kd_tree_dst)
+        assert_array_equal(brute_idx, kd_tree_idx)
 
-            assert_allclose(ball_tree_dst, kd_tree_dst)
-            assert_array_equal(ball_tree_idx, kd_tree_idx)
+        assert_allclose(ball_tree_dst, kd_tree_dst)
+        assert_array_equal(ball_tree_idx, kd_tree_idx)
 
 
 def test_callable_metric():
