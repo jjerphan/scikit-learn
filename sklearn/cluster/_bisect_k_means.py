@@ -233,8 +233,8 @@ class BisectingKMeans(_BaseKMeans):
         self.algorithm = algorithm
         self.bisecting_strategy = bisecting_strategy
 
-    def _check_params(self, X):
-        super()._check_params(X)
+    def _check_params_vs_input(self, X):
+        super()._check_params_vs_input(X)
 
         # algorithm
         if self.algorithm not in ("lloyd", "elkan"):
@@ -389,7 +389,7 @@ class BisectingKMeans(_BaseKMeans):
             accept_large_sparse=False,
         )
 
-        self._check_params(X)
+        self._check_params_vs_input(X)
         self._random_state = check_random_state(self.random_state)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         self._n_threads = _openmp_effective_n_threads()
