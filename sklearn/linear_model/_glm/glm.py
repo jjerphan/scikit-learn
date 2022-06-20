@@ -14,6 +14,7 @@ import numpy as np
 import scipy.linalg
 import scipy.optimize
 import scipy.sparse
+import scipy.sparse.linalg
 
 from ..._loss.glm_distribution import TweedieDistribution
 from ..._loss.loss import (
@@ -458,17 +459,18 @@ class NewtonSolver(ABC):
         return self.coef
 
 
-class BaseCholeskyNewtonSolver(NewtonSolver):
-    """Cholesky based Newton solver.
+class BaseLDLTNewtonSolver(NewtonSolver):
+    """LDL^T-based based Newton solver.
 
-    Inner solver for finding the Newton step H w_newton = -g uses Cholesky based linear
+    Inner solver for finding the Newton step H w_newton = -g using LDL^T-based linear
     solver.
     """
 
-    def setup(self, X, y, sample_weight):
+    def setup(self, X, y, sample_weight, assume_a):
         super().setup(X=X, y=y, sample_weight=sample_weight)
         self.count_singular = 0
         self.count_hessian_warning = 0
+        self.assume_a = assume_a
 
     def inner_solve(self, X, y, sample_weight):
         if self.hessian_warning:
@@ -496,7 +498,10 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
             with warnings.catch_warnings():
                 warnings.simplefilter("error", scipy.linalg.LinAlgWarning)
                 self.coef_newton = scipy.linalg.solve(
-                    self.hessian, -self.gradient, check_finite=False, assume_a="sym"
+                    self.hessian,
+                    -self.gradient,
+                    check_finite=False,
+                    assume_a=self.assume_a,
                 )
             return
         except (np.linalg.LinAlgError, scipy.linalg.LinAlgWarning) as e:
@@ -540,15 +545,15 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
             self.coef_newton = -self.gradient / (np.diag(self.hessian) + eps)
 
 
-class CholeskyNewtonSolver(BaseCholeskyNewtonSolver):
-    """Cholesky based Newton solver.
+class LDLTNewtonSolver(BaseLDLTNewtonSolver):
+    """LDL^T-based based Newton solver.
 
-    Inner solver for finding the Newton step H w_newton = -g uses Cholesky based linear
+    Inner solver for finding the Newton step H w_newton = -g using LDL^T-based linear
     solver.
     """
 
-    def setup(self, X, y, sample_weight):
-        super().setup(X=X, y=y, sample_weight=sample_weight)
+    def setup(self, X, y, sample_weight, assume_a="sym"):
+        super().setup(X=X, y=y, sample_weight=sample_weight, assume_a=assume_a)
 
         n_dof = X.shape[1]
         if self.linear_loss.fit_intercept:
@@ -570,8 +575,8 @@ class CholeskyNewtonSolver(BaseCholeskyNewtonSolver):
         )
 
 
-class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
-    """QR and Cholesky based Newton solver.
+class QRLDLTNewtonSolver(BaseLDLTNewtonSolver):
+    """QR and LDL^T-based based Newton solver.
 
     This is a good solver for n_features >> n_samples, see [1].
 
@@ -595,7 +600,7 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
     https://web.stanford.edu/~hastie/Papers/pgtn.pdf
     """
 
-    def setup(self, X, y, sample_weight):
+    def setup(self, X, y, sample_weight, assume_a="sym"):
         n_samples, n_features = X.shape
         # TODO: setting pivoting=True could improve stability
         # QR of X'
@@ -614,7 +619,7 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
         self.gradient = np.empty_like(self.coef)
         self.hessian = np.empty_like(self.coef, shape=(n_dof, n_dof))
 
-        super().setup(X=self.R.T, y=y, sample_weight=sample_weight)
+        super().setup(X=self.R.T, y=y, sample_weight=sample_weight, assume_a=assume_a)
 
     def update_gradient_hessian(self, X, y, sample_weight):
         # Use R' instead of X
@@ -649,6 +654,16 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
         if self.linear_loss.fit_intercept:
             self.coef_original[-1] = intercept
         self.coef = self.coef_original
+
+
+class QRCholeskyNewtonSolver(QRLDLTNewtonSolver):
+    def setup(self, X, y, sample_weight, assume_a="pos"):
+        super().setup(X=X, y=y, sample_weight=sample_weight, assume_a=assume_a)
+
+
+class CholeskyNewtonSolver(LDLTNewtonSolver):
+    def setup(self, X, y, sample_weight, assume_a="pos"):
+        super().setup(X=X, y=y, sample_weight=sample_weight, assume_a=assume_a)
 
 
 class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
@@ -811,12 +826,15 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             "lbfgs",
             "newton-cholesky",
             "newton-qr-cholesky",
+            "newton-ldlt",
+            "newton-qr-ldlt",
         ] and not (
             isinstance(self.solver, type) and issubclass(self.solver, NewtonSolver)
         ):
             raise ValueError(
                 f"{self.__class__.__name__} supports only solvers 'lbfgs', "
-                f"'newton-cholesky' and 'newton-qr-cholesky'; got {self.solver}"
+                "'newton-ldlt', 'newton-qr-ldlt', 'newton-cholesky' "
+                f"and 'newton-qr-cholesky'; got {self.solver}"
             )
         solver = self.solver
         check_scalar(
@@ -938,8 +956,15 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             )
             self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
             coef = opt_res.x
-        elif solver in ["newton-cholesky", "newton-qr-cholesky"]:
+        elif solver in [
+            "newton-cholesky",
+            "newton-qr-cholesky",
+            "newton-ldlt",
+            "newton-qr-ldlt",
+        ]:
             sol_dict = {
+                "newton-ldlt": LDLTNewtonSolver,
+                "newton-qr-ldlt": QRLDLTNewtonSolver,
                 "newton-cholesky": CholeskyNewtonSolver,
                 "newton-qr-cholesky": QRCholeskyNewtonSolver,
             }
