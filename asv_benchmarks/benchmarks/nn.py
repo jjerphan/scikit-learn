@@ -14,19 +14,20 @@ from sklearn.neighbors import NearestNeighbors
 
 class NearestNeighborsBenchmark(Benchmark):
 
-    param_names = ["n_train", "n_test", "n_features", "metric", "strategy"]
+    param_names = ["n_train", "n_test", "n_features", "metric", "strategy", "dtype"]
     params = [
         [1000, 10_000, 100_000],
         [1000, 10_000, 100_000],
         [100],
-        ["euclidean", "manhattan"],
-        ["auto", "parallel_on_X", "parallel_on_Y"],
+        ["manhattan", "euclidean"],
+        ["auto"],
+        [np.float32, np.float64],
     ]
 
-    def setup(self, n_train, n_test, n_features, metric, strategy):
+    def setup(self, n_train, n_test, n_features, metric, strategy, dtype):
         rng = np.random.RandomState(0)
-        X_train = rng.rand(n_train, n_features)
-        X_test = rng.rand(n_test, n_features)
+        X_train = rng.rand(n_train, n_features).astype(dtype)
+        X_test = rng.rand(n_test, n_features).astype(dtype)
         self.y_train = rng.randint(low=-1, high=1, size=(n_train,))
         self.metric = metric
         self.strategy = strategy
@@ -50,7 +51,7 @@ class NearestNeighborsBenchmark(Benchmark):
         ).fit(self.X_train)
 
     def time_kneighbors(
-        self, n_train, n_test, n_features, metric, strategy
+        self, n_train, n_test, n_features, metric, strategy, dtype,
     ):
         self.nn.kneighbors(self.X_test)
 
