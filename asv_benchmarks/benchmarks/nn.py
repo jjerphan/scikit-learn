@@ -13,6 +13,9 @@ from sklearn.neighbors import NearestNeighbors
 
 class NearestNeighborsBenchmark(Benchmark):
 
+    # Overriding the inherited default individual timeout of 500 seconds
+    timeout = 1000  # seconds
+
     param_names = [
         "n_train",
         "n_test",
@@ -24,8 +27,8 @@ class NearestNeighborsBenchmark(Benchmark):
     ]
 
     params = [
-        [1000, 10_000, 100_000, 1_000_000],
-        [1000, 10_000, 100_000],
+        [10_000, 100_000, 100_000, 1_000_000],
+        [1_000, 10_000, 100_000, 100_000],
         [100],
         ["manhattan", "euclidean"],
         ["auto"],
@@ -56,6 +59,8 @@ class NearestNeighborsBenchmark(Benchmark):
 
         self.y_train = rng.randint(low=-1, high=1, size=(n_train,))
         self.metric = metric
+        # Strategy is not used in this case, but we keep it in case
+        # we want to benchmark different strategies for the backend.
         self.strategy = strategy
 
         self.k = 10
