@@ -28,11 +28,11 @@ class PairwiseDistancesReductionsBenchmark(Benchmark):
         [1000, 10_000, int(1e7)],
         [1000, 10_000, 100_000],
         [100],
-        ["euclidean", "manhattan"],
+        ["euclidean"],
         ["auto", "parallel_on_X", "parallel_on_Y"],
         [np.float32, np.float64],
-        ["dense", "csr"],
-        ["dense", "csr"],
+        ["dense"],
+        ["dense"],
     ]
 
     def setup(
@@ -99,46 +99,4 @@ class PairwiseDistancesReductionsBenchmark(Benchmark):
             metric=self.metric,
             return_distance=True,
             strategy=self.strategy,
-        )
-
-    def peakmem_ArgKmin(
-        self,
-        n_train,
-        n_test,
-        n_features,
-        metric,
-        strategy,
-        dtype,
-        X_train,
-        X_test,
-    ):
-        self.time_ArgKmin(
-            n_train,
-            n_test,
-            n_features,
-            metric,
-            strategy,
-            dtype,
-            X_train,
-            X_test,
-        )
-
-    def time_RadiusNeighbors(
-        self, n_train, n_test, n_features, metric, strategy, dtype, X_train, X_test
-    ):
-
-        RadiusNeighbors.compute(
-            X=self.X_test,
-            Y=self.X_train,
-            radius=self.radius,
-            metric=self.metric,
-            return_distance=True,
-            strategy=self.strategy,
-        )
-
-    def peakmem_RadiusNeighbors(
-        self, n_train, n_test, n_features, metric, strategy, dtype, X_train, X_test
-    ):
-        self.time_RadiusNeighbors(
-            n_train, n_test, n_features, metric, strategy, dtype, X_train, X_test
         )
