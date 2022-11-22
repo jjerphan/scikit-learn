@@ -17,14 +17,7 @@ cimport numpy as cnp
 
 from libcpp.vector cimport vector
 
-from ...utils._cython_blas cimport (
-  BLAS_Order,
-  BLAS_Trans,
-  NoTrans,
-  RowMajor,
-  Trans,
-  _gemm,
-)
+from scipy.linalg.cython_blas cimport dgemm
 from ...utils._typedefs cimport DTYPE_t, ITYPE_t, SPARSE_INDEX_TYPE_t
 
 # TODO: change for `libcpp.algorithm.fill` once Cython 3 is used
@@ -370,17 +363,15 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
         cdef:
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num].data()
 
-            # Careful: LDA, LDB and LDC are given for F-ordered arrays
-            # in BLAS documentations, for instance:
-            # https://www.netlib.org/lapack/explore-html/db/dc9/group__single__blas__level3_gafe51bacb54592ff5de056acabd83c260.html #noqa
-            #
             # Here, we use their counterpart values to work with C-ordered arrays.
-            BLAS_Order order = RowMajor
-            BLAS_Trans ta = NoTrans
-            BLAS_Trans tb = Trans
-            ITYPE_t m = X_end - X_start
-            ITYPE_t n = Y_end - Y_start
-            ITYPE_t K = self.n_features
+            # ASCII code for 'n' used here not to transpose X[X_start:X_end]
+            char ta = 100
+            # ASCII code for 't' used here     to transpose Y[Y_start:Y_end]
+            char tb = 116
+
+            int m = X_end - X_start
+            int n = Y_end - Y_start
+            int k = self.n_features
             DTYPE_t alpha = - 2.
 {{if upcast_to_float64}}
             DTYPE_t * A = self.X_c_upcast[thread_num].data()
@@ -392,13 +383,13 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
             DTYPE_t * A = <DTYPE_t *> &self.X[X_start, 0]
             DTYPE_t * B = <DTYPE_t *> &self.Y[Y_start, 0]
 {{endif}}
-            ITYPE_t lda = self.n_features
-            ITYPE_t ldb = self.n_features
+            int lda = self.n_features
+            int ldb = self.n_features
             DTYPE_t beta = 0.
-            ITYPE_t ldc = Y_end - Y_start
+            int ldc = n
 
         # dist_middle_terms = `-2 * X[X_start:X_end] @ Y[Y_start:Y_end].T`
-        _gemm(order, ta, tb, m, n, K, alpha, A, lda, B, ldb, beta, dist_middle_terms, ldc)
+        dgemm(&tb, &ta, &n, &m, &k, &alpha, B, &ldb, A, &lda, &beta, dist_middle_terms, &ldc)
 
         return dist_middle_terms
 
