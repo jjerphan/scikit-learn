@@ -253,6 +253,8 @@ def check_package_status(package, min_version):
             )
 
 
+optim_level = os.environ.get("DEBUG_OPTIM_LEVEL")
+
 extension_config = {
     "__check_build": [
         {"sources": ["_check_build.pyx"]},
@@ -422,11 +424,23 @@ extension_config = {
             "sources": ["_tree.pyx"],
             "language": "c++",
             "include_np": True,
-            "optimization_level": "O3",
+            "optimization_level": optim_level,
         },
-        {"sources": ["_splitter.pyx"], "include_np": True, "optimization_level": "O3"},
-        {"sources": ["_criterion.pyx"], "include_np": True, "optimization_level": "O3"},
-        {"sources": ["_utils.pyx"], "include_np": True, "optimization_level": "O3"},
+        {
+            "sources": ["_splitter.pyx"],
+            "include_np": True,
+            "optimization_level": optim_level,
+        },
+        {
+            "sources": ["_criterion.pyx"],
+            "include_np": True,
+            "optimization_level": optim_level,
+        },
+        {
+            "sources": ["_utils.pyx"],
+            "include_np": True,
+            "optimization_level": optim_level,
+        },
     ],
     "utils": [
         {"sources": ["sparsefuncs_fast.pyx"], "include_np": True},
@@ -581,10 +595,15 @@ def configure_extension_modules():
             optimization_level = extension.get(
                 "optimization_level", default_optimization_level
             )
+
+            extra_compile_args.append("-c")
+            extra_compile_args.append("-Q")
             if os.name == "posix":
                 extra_compile_args.append(f"-{optimization_level}")
             else:
                 extra_compile_args.append(f"/{optimization_level}")
+
+            extra_compile_args.append("--help=optimizers")
 
             libraries_ext = extension.get("libraries", []) + default_libraries
 

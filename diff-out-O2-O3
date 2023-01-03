@@ -1,0 +1,231 @@
+<   creating /tmp/tmpeol1yzg2.build-temp/sklearn/tree
+<   gcc -pthread -B /home/jjerphan/.local/share/miniconda3/envs/sk/compiler_compat -DNDEBUG -fwrapv -O2 -Wall -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -I/home/jjerphan/.local/share/miniconda3/envs/sk/lib/python3.11/site-packages/numpy/core/include -I/home/jjerphan/.local/share/miniconda3/envs/sk/include/python3.11 -c sklearn/tree/_tree.cpp -o /tmp/tmpeol1yzg2.build-temp/sklearn/tree/_tree.o -g0 -c -Q -O2 --help=optimizers -fopenmp
+---
+>   creating /tmp/tmpjsvno1qo.build-temp/sklearn/tree
+>   gcc -pthread -B /home/jjerphan/.local/share/miniconda3/envs/sk/compiler_compat -DNDEBUG -fwrapv -O2 -Wall -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -I/home/jjerphan/.local/share/miniconda3/envs/sk/lib/python3.11/site-packages/numpy/core/include -I/home/jjerphan/.local/share/miniconda3/envs/sk/include/python3.11 -c sklearn/tree/_tree.cpp -o /tmp/tmpjsvno1qo.build-temp/sklearn/tree/_tree.o -g0 -c -Q -O3 --help=optimizers -fopenmp
+12301c12301
+<     -fgcse-after-reload                         [disabled]
+---
+>     -fgcse-after-reload                         [enabled]
+12322c12322
+<     -fipa-cp-clone                              [disabled]
+---
+>     -fipa-cp-clone                              [enabled]
+12354c12354
+<     -floop-interchange                          [disabled]
+---
+>     -floop-interchange                          [enabled]
+12357c12357
+<     -floop-unroll-and-jam                       [disabled]
+---
+>     -floop-unroll-and-jam                       [enabled]
+12374c12374
+<     -fpeel-loops                                [disabled]
+---
+>     -fpeel-loops                                [enabled]
+12378c12378
+<     -fpredictive-commoning                      [disabled]
+---
+>     -fpredictive-commoning                      [enabled]
+12431,12432c12431,12432
+<     -fsplit-loops                               [disabled]
+<     -fsplit-paths                               [disabled]
+---
+>     -fsplit-loops                               [enabled]
+>     -fsplit-paths                               [enabled]
+12468c12468
+<     -ftree-loop-distribution                    [disabled]
+---
+>     -ftree-loop-distribution                    [enabled]
+12476c12476
+<     -ftree-partial-pre                          [disabled]
+---
+>     -ftree-partial-pre                          [enabled]
+12494c12494
+<     -funroll-completely-grow-size       [disabled]
+---
+>     -funroll-completely-grow-size       [enabled]
+12497c12497
+<     -funswitch-loops                            [disabled]
+---
+>     -funswitch-loops                            [enabled]
+12504,12505c12504,12505
+<     -fvect-cost-model=[unlimited|dynamic|cheap|very-cheap]      very-cheap
+<     -fversion-loops-for-strides                 [disabled]
+---
+>     -fvect-cost-model=[unlimited|dynamic|cheap|very-cheap]      dynamic
+>     -fversion-loops-for-strides                 [enabled]
+12517c12517
+<   gcc -pthread -B /home/jjerphan/.local/share/miniconda3/envs/sk/compiler_compat -DNDEBUG -fwrapv -O2 -Wall -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION -I/home/jjerphan/.local/share/miniconda3/envs/sk/lib/python3.11/site-packages/numpy/core/include -I/home/jjerphan/.local/share/miniconda3/envs/sk/include/python3.11 -c sklearn/tree/_splitter.c -o /tmp/tmpeol1yzg2.build-temp/sklearn/tree/_splitter.o -g0 -c -Q -O2 --help=optimizers -fopenmp
+---
+>   gcc -pthread -B /home/jjerphan/.local/share/miniconda3/envs/sk/compiler_compat -DNDEBUG -fwrapv -O2 -Wall -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION -I/home/jjerphan/.local/share/miniconda3/envs/sk/lib/python3.11/site-packages/numpy/core/include -I/home/jjerphan/.local/share/miniconda3/envs/sk/include/python3.11 -c sklearn/tree/_splitter.c -o /tmp/tmpjsvno1qo.build-temp/sklearn/tree/_splitter.o -g0 -c -Q -O3 --help=optimizers -fopenmp
+12573c12573
+<     -fgcse-after-reload                         [disabled]
+---
+>     -fgcse-after-reload                         [enabled]
+12594c12594
+<     -fipa-cp-clone                              [disabled]
+---
+>     -fipa-cp-clone                              [enabled]
+12626c12626
+<     -floop-interchange                          [disabled]
+---
+>     -floop-interchange                          [enabled]
+12629c12629
+<     -floop-unroll-and-jam                       [disabled]
+---
+>     -floop-unroll-and-jam                       [enabled]
+12646c12646
+<     -fpeel-loops                                [disabled]
+---
+>     -fpeel-loops                                [enabled]
+12650c12650
+<     -fpredictive-commoning                      [disabled]
+---
+>     -fpredictive-commoning                      [enabled]
+12703,12704c12703,12704
+<     -fsplit-loops                               [disabled]
+<     -fsplit-paths                               [disabled]
+---
+>     -fsplit-loops                               [enabled]
+>     -fsplit-paths                               [enabled]
+12740c12740
+<     -ftree-loop-distribution                    [disabled]
+---
+>     -ftree-loop-distribution                    [enabled]
+12748c12748
+<     -ftree-partial-pre                          [disabled]
+---
+>     -ftree-partial-pre                          [enabled]
+12766c12766
+<     -funroll-completely-grow-size       [disabled]
+---
+>     -funroll-completely-grow-size       [enabled]
+12769c12769
+<     -funswitch-loops                            [disabled]
+---
+>     -funswitch-loops                            [enabled]
+12776,12777c12776,12777
+<     -fvect-cost-model=[unlimited|dynamic|cheap|very-cheap]      very-cheap
+<     -fversion-loops-for-strides                 [disabled]
+---
+>     -fvect-cost-model=[unlimited|dynamic|cheap|very-cheap]      dynamic
+>     -fversion-loops-for-strides                 [enabled]
+12784,12785c12784,12785
+<   gcc -pthread -B /home/jjerphan/.local/share/miniconda3/envs/sk/compiler_compat -shared -Wl,--allow-shlib-undefined -Wl,-rpath,/home/jjerphan/.local/share/miniconda3/envs/sk/lib -Wl,-rpath-link,/home/jjerphan/.local/share/miniconda3/envs/sk/lib -L/home/jjerphan/.local/share/miniconda3/envs/sk/lib -Wl,--allow-shlib-undefined -Wl,-rpath,/home/jjerphan/.local/share/miniconda3/envs/sk/lib -Wl,-rpath-link,/home/jjerphan/.local/share/miniconda3/envs/sk/lib -L/home/jjerphan/.local/share/miniconda3/envs/sk/lib /tmp/tmpeol1yzg2.build-temp/sklearn/tree/_splitter.o -L/tmp/tmpeol1yzg2.build-temp -lm -llibsvm-skl -lliblinear-skl -o /tmp/tmpn5phfhm8.build-lib/sklearn/tree/_splitter.cpython-311-x86_64-linux-gnu.so -fopenmp
+<   /home/jjerphan/.local/share/miniconda3/envs/sk/compiler_compat/ld: warning: /tmp/tmpeol1yzg2.build-temp/sklearn/tree/_splitter.o: missing .note.GNU-stack section implies executable stack
+---
+>   gcc -pthread -B /home/jjerphan/.local/share/miniconda3/envs/sk/compiler_compat -shared -Wl,--allow-shlib-undefined -Wl,-rpath,/home/jjerphan/.local/share/miniconda3/envs/sk/lib -Wl,-rpath-link,/home/jjerphan/.local/share/miniconda3/envs/sk/lib -L/home/jjerphan/.local/share/miniconda3/envs/sk/lib -Wl,--allow-shlib-undefined -Wl,-rpath,/home/jjerphan/.local/share/miniconda3/envs/sk/lib -Wl,-rpath-link,/home/jjerphan/.local/share/miniconda3/envs/sk/lib -L/home/jjerphan/.local/share/miniconda3/envs/sk/lib /tmp/tmpjsvno1qo.build-temp/sklearn/tree/_splitter.o -L/tmp/tmpjsvno1qo.build-temp -lm -llibsvm-skl -lliblinear-skl -o /tmp/tmpdnm61o14.build-lib/sklearn/tree/_splitter.cpython-311-x86_64-linux-gnu.so -fopenmp
+>   /home/jjerphan/.local/share/miniconda3/envs/sk/compiler_compat/ld: warning: /tmp/tmpjsvno1qo.build-temp/sklearn/tree/_splitter.o: missing .note.GNU-stack section implies executable stack
+12788c12788
+<   gcc -pthread -B /home/jjerphan/.local/share/miniconda3/envs/sk/compiler_compat -DNDEBUG -fwrapv -O2 -Wall -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -I/home/jjerphan/.local/share/miniconda3/envs/sk/lib/python3.11/site-packages/numpy/core/include -I/home/jjerphan/.local/share/miniconda3/envs/sk/include/python3.11 -c sklearn/tree/_criterion.c -o /tmp/tmpeol1yzg2.build-temp/sklearn/tree/_criterion.o -g0 -c -Q -O2 --help=optimizers -fopenmp
+---
+>   gcc -pthread -B /home/jjerphan/.local/share/miniconda3/envs/sk/compiler_compat -DNDEBUG -fwrapv -O2 -Wall -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -I/home/jjerphan/.local/share/miniconda3/envs/sk/lib/python3.11/site-packages/numpy/core/include -I/home/jjerphan/.local/share/miniconda3/envs/sk/include/python3.11 -c sklearn/tree/_criterion.c -o /tmp/tmpjsvno1qo.build-temp/sklearn/tree/_criterion.o -g0 -c -Q -O3 --help=optimizers -fopenmp
+12844c12844
+<     -fgcse-after-reload                         [disabled]
+---
+>     -fgcse-after-reload                         [enabled]
+12865c12865
+<     -fipa-cp-clone                              [disabled]
+---
+>     -fipa-cp-clone                              [enabled]
+12897c12897
+<     -floop-interchange                          [disabled]
+---
+>     -floop-interchange                          [enabled]
+12900c12900
+<     -floop-unroll-and-jam                       [disabled]
+---
+>     -floop-unroll-and-jam                       [enabled]
+12917c12917
+<     -fpeel-loops                                [disabled]
+---
+>     -fpeel-loops                                [enabled]
+12921c12921
+<     -fpredictive-commoning                      [disabled]
+---
+>     -fpredictive-commoning                      [enabled]
+12974,12975c12974,12975
+<     -fsplit-loops                               [disabled]
+<     -fsplit-paths                               [disabled]
+---
+>     -fsplit-loops                               [enabled]
+>     -fsplit-paths                               [enabled]
+13011c13011
+<     -ftree-loop-distribution                    [disabled]
+---
+>     -ftree-loop-distribution                    [enabled]
+13019c13019
+<     -ftree-partial-pre                          [disabled]
+---
+>     -ftree-partial-pre                          [enabled]
+13037c13037
+<     -funroll-completely-grow-size       [disabled]
+---
+>     -funroll-completely-grow-size       [enabled]
+13040c13040
+<     -funswitch-loops                            [disabled]
+---
+>     -funswitch-loops                            [enabled]
+13047,13048c13047,13048
+<     -fvect-cost-model=[unlimited|dynamic|cheap|very-cheap]      very-cheap
+<     -fversion-loops-for-strides                 [disabled]
+---
+>     -fvect-cost-model=[unlimited|dynamic|cheap|very-cheap]      dynamic
+>     -fversion-loops-for-strides                 [enabled]
+13059c13059
+<   gcc -pthread -B /home/jjerphan/.local/share/miniconda3/envs/sk/compiler_compat -DNDEBUG -fwrapv -O2 -Wall -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION -I/home/jjerphan/.local/share/miniconda3/envs/sk/lib/python3.11/site-packages/numpy/core/include -I/home/jjerphan/.local/share/miniconda3/envs/sk/include/python3.11 -c sklearn/tree/_utils.c -o /tmp/tmpeol1yzg2.build-temp/sklearn/tree/_utils.o -g0 -c -Q -O2 --help=optimizers -fopenmp
+---
+>   gcc -pthread -B /home/jjerphan/.local/share/miniconda3/envs/sk/compiler_compat -DNDEBUG -fwrapv -O2 -Wall -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -O2 -isystem /home/jjerphan/.local/share/miniconda3/envs/sk/include -fPIC -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION -I/home/jjerphan/.local/share/miniconda3/envs/sk/lib/python3.11/site-packages/numpy/core/include -I/home/jjerphan/.local/share/miniconda3/envs/sk/include/python3.11 -c sklearn/tree/_utils.c -o /tmp/tmpjsvno1qo.build-temp/sklearn/tree/_utils.o -g0 -c -Q -O3 --help=optimizers -fopenmp
+13115c13115
+<     -fgcse-after-reload                         [disabled]
+---
+>     -fgcse-after-reload                         [enabled]
+13136c13136
+<     -fipa-cp-clone                              [disabled]
+---
+>     -fipa-cp-clone                              [enabled]
+13168c13168
+<     -floop-interchange                          [disabled]
+---
+>     -floop-interchange                          [enabled]
+13171c13171
+<     -floop-unroll-and-jam                       [disabled]
+---
+>     -floop-unroll-and-jam                       [enabled]
+13188c13188
+<     -fpeel-loops                                [disabled]
+---
+>     -fpeel-loops                                [enabled]
+13192c13192
+<     -fpredictive-commoning                      [disabled]
+---
+>     -fpredictive-commoning                      [enabled]
+13245,13246c13245,13246
+<     -fsplit-loops                               [disabled]
+<     -fsplit-paths                               [disabled]
+---
+>     -fsplit-loops                               [enabled]
+>     -fsplit-paths                               [enabled]
+13282c13282
+<     -ftree-loop-distribution                    [disabled]
+---
+>     -ftree-loop-distribution                    [enabled]
+13290c13290
+<     -ftree-partial-pre                          [disabled]
+---
+>     -ftree-partial-pre                          [enabled]
+13308c13308
+<     -funroll-completely-grow-size       [disabled]
+---
+>     -funroll-completely-grow-size       [enabled]
+13311c13311
+<     -funswitch-loops                            [disabled]
+---
+>     -funswitch-loops                            [enabled]
+13318,13319c13318,13319
+<     -fvect-cost-model=[unlimited|dynamic|cheap|very-cheap]      very-cheap
+<     -fversion-loops-for-strides                 [disabled]
+---
+>     -fvect-cost-model=[unlimited|dynamic|cheap|very-cheap]      dynamic
+>     -fversion-loops-for-strides                 [enabled]
