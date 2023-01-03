@@ -565,7 +565,7 @@ def sparse_enet_coordinate_descent(
 
 
 def enet_coordinate_descent_gram(
-    floating[::1] w,
+    cnp.ndarray[floating, ndim=1, mode='c'] w,
     floating alpha,
     floating beta,
     cnp.ndarray[floating, ndim=2, mode='c'] Q,

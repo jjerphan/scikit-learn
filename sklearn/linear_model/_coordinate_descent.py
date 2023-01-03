@@ -617,6 +617,10 @@ def enet_path(
             # checks
             if check_input:
                 precompute = check_array(precompute, dtype=X.dtype.type, order="C")
+            print("coef_.flags", coef_.flags, file=sys.stderr)
+            print("precompute.flags", precompute.flags, file=sys.stderr)
+            print("Xy.flags", Xy.flags, file=sys.stderr)
+            print("y.flags", y.flags, file=sys.stderr)
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_,
                 l1_reg,

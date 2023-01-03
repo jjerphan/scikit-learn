@@ -5,6 +5,10 @@ import numpy as np
 from functools import partial
 import itertools
 
+from joblib import Parallel
+
+import sklearn
+
 from sklearn.base import clone
 
 from sklearn.exceptions import ConvergenceWarning
@@ -1039,3 +1043,26 @@ def test_minibatch_dictionary_learning_warns_and_ignore_n_iter():
     with pytest.warns(FutureWarning, match=warn_msg):
         model = MiniBatchDictionaryLearning(batch_size=256, n_iter=2, max_iter=2).fit(X)
     assert model.n_iter_ == 2
+
+
+def test_cd_work_on_joblib_memmapped_data(monkeypatch):
+    monkeypatch.setattr(
+        sklearn.decomposition._dict_learning,
+        "Parallel",
+        partial(Parallel, max_nbytes=1000),
+    )
+
+    rng = np.random.RandomState(0)
+    X_train = rng.randn(100, 10)
+
+    dict_learner = DictionaryLearning(
+        n_components=5,
+        random_state=0,
+        n_jobs=2,
+        fit_algorithm="cd",
+        max_iter=50,
+        verbose=True,
+    )
+
+    # This must run and complete without error.
+    dict_learner.fit(X_train)
