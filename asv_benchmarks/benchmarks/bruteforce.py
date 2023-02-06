@@ -4,9 +4,9 @@ from sklearn.neighbors import KNeighborsClassifier
 
 from .common import Benchmark
 
-N_SAMPLES_TRAIN = [10_000, 100_000, 1_000_000]
-N_SAMPLES_TEST = [1000, 10_000, 100_000]
-N_FEATURES = [50, 100, 500]
+N_SAMPLES_TRAIN = [10_000]
+N_SAMPLES_TEST = [1_000]
+N_FEATURES = [100]
 
 
 class BruteForceKNeighborsClassifier(Benchmark):
@@ -22,7 +22,7 @@ class BruteForceKNeighborsClassifier(Benchmark):
     def setup(self, *params):
         n_train, n_test, n_features = params
         self.knc = KNeighborsClassifier(
-            n_neighbors=10, algorithm="brute", metric="manhattan"
+            n_neighbors=1000, algorithm="brute", metric="manhattan"
         )
 
         self.rng = np.random.RandomState(0)
