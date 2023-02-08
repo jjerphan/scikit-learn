@@ -4,9 +4,9 @@ from sklearn.neighbors import KNeighborsClassifier
 
 from .common import Benchmark
 
-N_SAMPLES_TRAIN = [10_000]
-N_SAMPLES_TEST = [1_000]
-N_FEATURES = [100]
+N_SAMPLES_TRAIN = [10_000, 100_000, 1_000_000]
+N_SAMPLES_TEST = [1, 256, 1_000, 10_000]
+N_FEATURES = [50, 100, 500]
 
 
 class BruteForceKNeighborsClassifier(Benchmark):
