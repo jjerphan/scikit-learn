@@ -33,6 +33,9 @@ cdef class DatasetsPair{{name_suffix}}:
 
     cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) noexcept nogil
 
+cdef class PrecomputedDistanceMatrix{{name_suffix}}(DatasetsPair{{name_suffix}}):
+    cdef:
+       const {{INPUT_DTYPE_t}}[:, ::1] distance_matrix
 
 cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef:
