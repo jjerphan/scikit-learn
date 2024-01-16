@@ -13,7 +13,7 @@ contourpy==1.0.7
     #   matplotlib
 cycler==0.11.0
     # via matplotlib
-cython==0.29.33
+cython==3.0.7
     # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
 exceptiongroup==1.1.2
     # via pytest
